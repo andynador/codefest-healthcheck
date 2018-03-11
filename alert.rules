@@ -1,0 +1,28 @@
+groups:
+- name: my-group-name
+  rules:
+  - alert: BizaccountStatus
+    expr: bizaccount_status{name="commercials_http_code"} != 200
+    for: 30s
+    annotations:
+        summary: "Сервис Рекламы"
+        description: "Сервис Рекламы недоступен - код ответа {{ $value }}"
+  - alert: BizaccountStatus
+    expr: bizaccount_status{name="mailer_http_code"} != 200
+    for: 30s
+    annotations:
+        summary: "Сервис Мэйлер"
+        description: "Сервис Мэйлер недоступен - код ответа {{ $value }}"
+  - alert: BizaccountStatus
+    expr: bizaccount_status{name="auth_http_code"} != 200
+    for: 30s
+    annotations:
+        summary: "Сервис Единой авторизации"
+        description: "Сервис Единой авторизации недоступен - код ответа {{ $value }}"
+  - alert: BizaccountStatus
+    expr: bizaccount_status{name="statistic_http_code"} != 200
+    for: 30s
+    annotations:
+        summary: "Сервис статистики"
+        description: "Сервис Статистики недоступен - код ответа {{ $value }}"
+

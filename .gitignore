@@ -1,0 +1,4 @@
+/vendor
+.codefest-healthcheck
+params.php
+nohup.out
