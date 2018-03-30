@@ -1,6 +1,7 @@
 <?php
 	use Longman\TelegramBot\Request;
-	use app\telegramHandler\BaseHandler;	
+	use app\telegramHandler\BaseHandler;
+	use app\Db;
 
 	function handleMetrics($checks) {
 		return function ($request, $response) use ($checks) {
@@ -16,56 +17,51 @@
         	};
 	}
 
-	function handleAlert(SQLite3 $db, $customNotifications) {
+	function handleAlert(Db $db, $customNotifications)
+	{
 		return function ($request, $response) use ($db, $customNotifications) {
 	                $result = json_decode((string)$request->getBody(), true);
-        	        if ($result['status'] == 'firing') {
-                	        $text = "<b>Хьюстон, у нас проблемы:</b>\n";
-                        	foreach ($result['alerts'] as $alert) {
-                                	$text .= '<code>' . $alert['annotations']['description'] . "</code>\n";
-                        	}
-                	} else {
-                        	$text = "<b>Ураа, вернулись в строй:</b>\n";
-                        	foreach ($result['alerts'] as $alert) {
-                                	$text .= '<code>' . $alert['annotations']['summary'] . "</code>\n";
-                        	}
-                	}
 			if (isset($customNotifications[$result['groupLabels']['alertname']])) {
 				$chatIDs = $customNotifications[$result['groupLabels']['alertname']];
 			} else {
-				$results = $db->query('SELECT * FROM subscription');
-				while ($row = $results->fetchArray()) {
-	                                $chatIDs[] = $row['chat_id'];
-				}
+	             		$chatIDs = $db->getChatIDsForSendAlert();
 			}
+			$handler = BaseHandler::create($db, BaseHandler::TEXT_MAKE_ALERT);
 			foreach ($chatIDs as $chatId) {
-				$data['chat_id'] = $chatId;
-				$data['text'] = $text;
-				$data['parse_mode'] = 'HTML';
-				$data['reply_markup'] = getCommonReplyMarkup($db, $chatId);
-				Request::sendMessage($data);				
+				Request::sendMessage($handler->getMessage($chatId, null, $result));
 			}
 		};
 	}
 
-	function handleHook(SQLite3 $db) {
+	function handleHook(Db $db)
+	{
 		return function ($request, $response) use ($db) {
 			$body = json_decode((string)$request->getBody(), true);
-			$alias = null;
-			if (isset($body['callback_query'])) {
-				$items = explode(' ', $body['callback_query']['data'], 2);
-				$type = $items[0];
-				$alias = $items[1] ?? null;
-				$chatId = $body['callback_query']['message']['chat']['id'];
-			} else {
-				$type = $body['message']['text'];
-                                $chatId = $body['message']['chat']['id'];
-			}
+			$params = getParamsFromBody($body);
 
-			$handler = BaseHandler::create($db, $type);
+			$handler = BaseHandler::create($db, $params['type']);
 			if (empty($handler)) {
 				return;
 			}
-			Request::sendMessage($handler->getMessage($chatId, $alias));	
+			Request::sendMessage($handler->getMessage($params['chatId'], $params['alias']));	
 		};
+	}
+
+	function getParamsFromBody(array $body) : array
+	{
+		if (isset($body['callback_query'])) {
+               		$items = explode(' ', $body['callback_query']['data'], 2);
+			
+			return [
+				'type' => $items[0],
+				'alias' => $items[1] ?? null,
+				'chatId' => $body['callback_query']['message']['chat']['id'],
+			];
+		}
+		
+		return [
+			'type' => $body['message']['text'],
+			'alias' => null,
+			'chatId' => $body['message']['chat']['id'],
+		];
 	}

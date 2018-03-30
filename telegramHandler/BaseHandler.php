@@ -1,5 +1,7 @@
 <?php
 	namespace app\telegramHandler;
+	
+	use app\Db;
 
 	abstract class BaseHandler
 	{
@@ -20,17 +22,18 @@
 		const TEXT_FEEDBACK = 'обратная связь';
 		const TEXT_SERVICES = 'о сервисах';
 		const TEXT_TECHINFO = 'о боте';
+		const TEXT_MAKE_ALERT = 'make alert';
 		
 		protected $db;
 
-		abstract public function getMessage(string $chatId, ?string $alias) : array;
+		abstract public function getMessage(string $chatId, ?string $alias, array $additionalParams = []) : array;
 
-		public function __construct(\SQLite3 $db)
+		public function __construct(Db $db)
 		{
 			$this->db = $db;
 		}
 		
-		final public static function create(\SQLite3 $db, string $text) : ?BaseHandler 
+		final public static function create(Db $db, string $text) : ?BaseHandler 
 		{
 			switch (mb_strtolower($text)) {
 				case self::COMMAND_START:
@@ -57,6 +60,8 @@
 				case self::COMMAND_TECHINFO:
 				case self::TEXT_TECHINFO:
 					return new TechInfoHandler($db);
+				case self::TEXT_MAKE_ALERT:
+					return new AlertHandler($db);
 				default:
 					return null;				
 			}
@@ -64,11 +69,7 @@
 
 		protected function isChatSubscribed($chatId)
 		{
-                	$smt = $this->db->prepare("SELECT 1 FROM subscription WHERE chat_id = :chat_id");
-	                $smt->bindValue(':chat_id', $chatId, SQLITE3_TEXT);
-        	        $result = $smt->execute()->fetchArray(SQLITE3_NUM);
-	
-        	        return isset($result[0]);
+			return $this->db->isChatIdExistInSubscription($chatId);
         	}
 		
 		protected function getCommonReplyMarkup($chatId) {

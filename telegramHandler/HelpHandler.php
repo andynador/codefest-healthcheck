@@ -3,7 +3,7 @@
 	
 	class HelpHandler extends BaseHandler
 	{
-		public function getMessage(string $chatId, ?string $alias) : array 
+		public function getMessage(string $chatId, ?string $alias, array $additionalParams = []) : array 
 		{
 			return [
 	                        'chat_id' => $chatId,

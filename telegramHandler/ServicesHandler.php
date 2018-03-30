@@ -3,22 +3,17 @@
 	
 	class ServicesHandler extends BaseHandler
 	{
-		public function getMessage(string $chatId, ?string $alias) : array 
+		public function getMessage(string $chatId, ?string $alias, array $additionalParams = []) : array 
 		{
 			if ($alias) {
-           			$smt = $this->db->prepare("SELECT * FROM service WHERE alias = :alias");
-				$smt->bindValue(':alias', $alias, SQLITE3_TEXT);
-	                        $result = $smt->execute();
-
         	                return [
 	                                'chat_id' => $chatId,
-        	                        'text' => $result->fetchArray()['info'],
+        	                        'text' => $this->db->getInfoForService($alias),
                 	                'reply_markup' => $this->getCommonReplyMarkup($chatId),
                         	];
                 	}
 	                $inlineKeyboard = [];
-        	        $results = $this->db->query('SELECT * FROM service');
-                	while ($row = $results->fetchArray()) {
+                	foreach ($this->db->getServices() as $row) {
                         	$inlineKeyboard[] = [['text' => $row['name'], 'callback_data' => BaseHandler::COMMAND_SERVICES . ' ' . $row['alias']]];
 	                }
 

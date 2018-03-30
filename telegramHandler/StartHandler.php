@@ -3,7 +3,7 @@
 	
 	class StartHandler extends BaseHandler
 	{
-		public function getMessage(string $chatId, ?string $alias) : array 
+		public function getMessage(string $chatId, ?string $alias, array $additionalParams = []) : array 
 		{
 			if ($this->isChatSubscribed($chatId)) {
 	                        return [
@@ -12,10 +12,7 @@
                         	        'reply_markup' => $this->getCommonReplyMarkup($chatId),
                         	];
                 	}
-
-                	$smt = $this->db->prepare("INSERT INTO subscription (chat_id) values (:chat_id)");
-	                $smt->bindValue(':chat_id', $chatId, SQLITE3_TEXT);
-        	        $smt->execute();
+			$this->db->insertChatIdIntoSubscriptions($chatId);
 		
                 	return [
                         	'chat_id' => $chatId,

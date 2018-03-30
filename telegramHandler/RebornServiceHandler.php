@@ -3,14 +3,10 @@
 	
 	class RebornServiceHandler extends BaseHandler
 	{
-		public function getMessage(string $chatId, ?string $alias) : array 
+		public function getMessage(string $chatId, ?string $alias, array $additionalParams = []) : array 
 		{
 			if ($alias) {
-                        	$smt = $this->db->prepare("UPDATE service SET response_code = :response_code WHERE alias = :alias");
-	                        $smt->bindValue(':response_code', 200, SQLITE3_TEXT);
-        	                $smt->bindValue(':alias', $alias, SQLITE3_TEXT);
-                	        $smt->execute();
-
+				$this->db->updateResponseCodeForService(200, $alias);				
                         	return [
 	                                'chat_id' => $chatId,
         	                        'text' => 'Скоро я отправлю нотификацию подписчикам, что сервис в работе. Спасибо 😉',
@@ -19,8 +15,7 @@
 	                }
 
 	                $inlineKeyboard = [];
-        	        $results = $this->db->query('SELECT * FROM service WHERE response_code != "200"');
-	                while ($row = $results->fetchArray()) {
+	                foreach ($this->db->getNotAliveServices() as $row) {
         			$inlineKeyboard[] = [['text' => $row['name'], 'callback_data' => BaseHandler::COMMAND_REBORN_SERVICE . ' ' . $row['alias']]];
 	                }
         	        if ($inlineKeyboard) {
