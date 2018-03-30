@@ -25,4 +25,11 @@ groups:
     annotations:
         summary: "Сервис статистики"
         description: "Сервис Статистики недоступен - код ответа {{ $value }}"
-
+- name: feed-group-name
+  rules:
+  - alert: InstanseFeedDown
+    expr: up == 0
+    for: 30s
+    annotations:
+        summary: "Лента событий"
+        description: "Лента событий лежит"

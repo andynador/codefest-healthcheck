@@ -9,7 +9,7 @@
 
 	$app = new Slim\App();
 	$app->get('/metrics', handleMetrics(initChecks($db)));
-	$app->post('/alert', handleAlert($db));
+	$app->post('/alert', handleAlert($db, $params['telegram']['customNotifications'] ?? []));
 	$app->post('/hook', handleHook($db));
 
 	$app->run();
