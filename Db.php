@@ -12,7 +12,7 @@
 
 		public function getChatIDsForSendAlert() : array
 		{
-			$results = $this->db->query('SELECT * FROM subscription WHERE chat_id = 266141495');
+			$results = $this->db->query('SELECT * FROM subscription');
                       	while ($row = $results->fetchArray()) {
                      		$chatIDs[] = $row['chat_id'];
                  	}
